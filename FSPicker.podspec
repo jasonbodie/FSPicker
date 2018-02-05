@@ -44,5 +44,5 @@ Pod::Spec.new do |s|
 
   s.resources = 'FSPicker/Shared/Resources/fsImages.xcassets', 'FSPicker/Shared/Resources/fsAllowedUrlPrefix.plist'
 
-  s.ios.dependency 'Filestack'
+  s.ios.dependency 'Filestack', "~> 0.3.5"
 end
