@@ -12,6 +12,7 @@
 #import "FSListTableViewCell.h"
 #import "FSContentItem.h"
 #import "FSImage.h"
+#import "NSURLResponse+ImageMimeType.h"
 
 @interface FSSourceTableViewController ()
 
@@ -64,9 +65,15 @@ static NSString *const reuseIdentifier = @"fsCell";
 #pragma mark - Helper methods
 
 - (CGFloat)topInset {
-    CGFloat navBarHeight = self.navigationController.navigationBar.frame.size.height;
-    CGFloat navBarOriginY = self.navigationController.navigationBar.frame.origin.y;
-    CGFloat topInset = navBarHeight + navBarOriginY;
+    CGFloat topInset;
+
+    if (self.navigationController.navigationBar.isTranslucent) {
+        CGFloat navBarHeight = self.navigationController.navigationBar.frame.size.height;
+        CGFloat navBarOriginY = self.navigationController.navigationBar.frame.origin.y;
+        topInset = navBarHeight + navBarOriginY;
+    } else {
+        topInset = 0.0;
+    }
 
     if ([self.refreshControl isRefreshing]) {
         topInset += self.refreshControl.frame.size.height;
@@ -96,6 +103,7 @@ static NSString *const reuseIdentifier = @"fsCell";
 - (void)updateTableViewContentInsets {
     UIEdgeInsets currentInsets = self.tableView.contentInset;
     CGFloat topInset = [self topInset];
+
     if (currentInsets.top != 0 || !_alreadyDisplayed) {
         self.tableView.contentInset = UIEdgeInsetsMake(topInset, currentInsets.left, currentInsets.bottom, currentInsets.right);
         self.alreadyDisplayed = YES;
@@ -279,23 +287,34 @@ static NSString *const reuseIdentifier = @"fsCell";
     } else if (!item.thumbExists) {
         cell.imageView.image = [FSImage iconNamed:@"icon-file"];
     } else {
-        cell.imageView.contentMode = UIViewContentModeScaleAspectFill;
-        cell.imageView.clipsToBounds = YES;
-        cell.imageView.alpha = 0.0;
-
         NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:item.thumbnailURL] cachePolicy:NSURLRequestReturnCacheDataElseLoad timeoutInterval:120];
 
         cell.imageTask = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-            if (data && (cell.taskHash == cell.imageTask.hash)) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    cell.imageView.image = [UIImage imageWithData:data];
-                    [UIView animateWithDuration:0.1 animations:^{
-                        cell.imageView.alpha = 1.0;
-                    } completion:^(BOOL finished) {
-                        [cell layoutSubviews];
-                    }];
-                });
+
+            UIImage *image;
+
+            if (response.hasImageMIMEType && data && (cell.taskHash == cell.imageTask.hash)) {
+                image = [UIImage imageWithData:data];
             }
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (image) {
+                    cell.imageView.contentMode = UIViewContentModeScaleAspectFill;
+                    cell.imageView.clipsToBounds = YES;
+                    cell.imageView.alpha = 0.0;
+                    cell.imageView.image = image;
+                } else {
+                    cell.imageView.contentMode = UIViewContentModeScaleAspectFit;
+                    cell.imageView.image = [FSImage iconNamed:@"icon-file"];
+                }
+
+                [UIView animateWithDuration:0.1 animations:^{
+                    cell.imageView.alpha = 1.0;
+                } completion:^(BOOL finished) {
+                    [cell layoutSubviews];
+                }];
+            });
+
             cell.imageTask = nil;
         }];
 

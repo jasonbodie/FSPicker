@@ -20,7 +20,7 @@ $ gem install cocoapods
 To integrate FSPicker into your Xcode project using CocoaPods, specify it in your `Podfile`:
 
 ```ruby
-pod "FSPicker", "~> 1.1.3"
+pod "FSPicker", "~> 1.1.8"
 ```
 Then, run the following command:
 
@@ -41,6 +41,8 @@ To begin using FSPicker you need to import the module:
 // or
 @import FSPicker;
 ```
+
+To integrate Google Services and Google SignIn please read```GoogleServicesIntegration```
 
 Initialize [config](#fsconfig), (optionally [theme](#fstheme) and [store options](#fsstoreoptions)) and finally FSPickerController:
 
