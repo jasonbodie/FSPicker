@@ -8,7 +8,6 @@
 
 #import "FSSource.h"
 #import "FSConfig.h"
-#import "FSSettings.h"
 #import "FSAuthViewController.h"
 
 @interface FSAuthViewController () <UIWebViewDelegate>
@@ -16,8 +15,8 @@
 @property (nonatomic, strong) FSSource *source;
 @property (nonatomic, strong) FSConfig *config;
 @property (nonatomic, strong) UIWebView *webView;
-@property (nonatomic, strong) NSArray *allowedUrls;
 @property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
+@property (nonatomic, assign) BOOL didAuthenticate;
 
 @end
 
@@ -30,7 +29,7 @@ static NSString *const fsAuthURL = @"%@/api/client/%@/auth/open?m=*/*&key=%@&id=
     if ((self = [super init])) {
         _source = source;
         _config = config;
-        _allowedUrls = [FSSettings allowedUrlPrefixList];
+        _didAuthenticate = NO;
     }
 
     return self;
@@ -47,6 +46,16 @@ static NSString *const fsAuthURL = @"%@/api/client/%@/auth/open?m=*/*&key=%@&id=
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     [self.webView stopLoading];
+
+    if (self.didAuthenticate) {
+        if ([self.delegate respondsToSelector:@selector(didAuthenticateWithSource)]) {
+            [self.delegate didAuthenticateWithSource];
+        }
+    } else {
+        if ([self.delegate respondsToSelector:@selector(didFailToAuthenticateWithSource)]) {
+            [self.delegate didFailToAuthenticateWithSource];
+        }
+    }
 }
 
 - (void)setupWebView {
@@ -70,29 +79,44 @@ static NSString *const fsAuthURL = @"%@/api/client/%@/auth/open?m=*/*&key=%@&id=
 }
 
 - (BOOL)webView:(UIWebView *)localWebView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType{
-    NSString *absoluteString = request.URL.absoluteString;
+
+    // Detect authentication success response and notify the delegate
 
     if ([request.URL.path isEqualToString:@"/dialog/open"]) {
         [self.navigationController popViewControllerAnimated:YES];
-
-        if ([self.delegate respondsToSelector:@selector(didAuthenticateWithSource)]) {
-            [self.delegate didAuthenticateWithSource];
-        }
+        self.didAuthenticate = YES;
 
         return NO;
     }
 
-    for (NSString *url in self.allowedUrls) {
-        if ([url isEqualToString:@""]) {
-            continue;
+    // Detect authentication error response and notify the delegate
+
+    NSString *authCallbackOpenPath = [NSString stringWithFormat:@"/api/client/%@/authCallback/open", self.source.identifier];
+
+    if ([request.URL.path hasPrefix:authCallbackOpenPath]) {
+        BOOL didError = NO;
+
+        NSURLComponents *urlComponents = [NSURLComponents componentsWithURL:request.URL
+                                                    resolvingAgainstBaseURL:NO];
+
+        for (NSURLQueryItem *queryItem in urlComponents.queryItems) {
+            if ([queryItem.name isEqualToString:@"error"] ||
+                [queryItem.name isEqualToString:@"error_description"]) {
+
+                didError = YES;
+                break;
+            }
         }
 
-        if ([absoluteString containsString:url]) {
-            return YES;
+        if (didError) {
+            [self.navigationController popViewControllerAnimated:YES];
+
+            return NO;
         }
+
     }
 
-    return NO;
+    return YES;
 }
 
 - (void)webViewDidStartLoad:(UIWebView *)webView {
