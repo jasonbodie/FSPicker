@@ -13,6 +13,9 @@
 #import "FSCollectionViewCell.h"
 #import "FSContentItem.h"
 #import "FSImage.h"
+#import "FSSource.h"
+#import "NSURLResponse+ImageMimeType.h"
+#import "UIImage+Scale.h"
 
 @interface FSSourceCollectionViewController ()
 
@@ -184,9 +187,19 @@ static NSString * const reuseIdentifier = @"fsCell";
 }
 
 - (CGFloat)topInset {
-    CGFloat navBarHeight = self.navigationController.navigationBar.frame.size.height;
-    CGFloat navBarOriginY = self.navigationController.navigationBar.frame.origin.y;
-    CGFloat topInset = navBarHeight + navBarOriginY;
+    CGFloat topInset;
+
+    if (self.navigationController.navigationBar.isTranslucent) {
+        CGFloat navBarHeight = self.navigationController.navigationBar.frame.size.height;
+        CGFloat navBarOriginY = self.navigationController.navigationBar.frame.origin.y;
+        topInset = navBarHeight + navBarOriginY;
+    } else {
+        topInset = 0.0;
+    }
+
+    if ([self.refreshControl isRefreshing]) {
+        topInset += self.refreshControl.frame.size.height;
+    }
 
     return topInset;
 }
@@ -234,6 +247,7 @@ static NSString * const reuseIdentifier = @"fsCell";
     }
 
     cell.userInteractionEnabled = YES;
+    cell.backgroundColor = [UIColor clearColor];
     cell.imageView.contentMode = UIViewContentModeCenter;
     cell.imageView.layer.borderWidth = 1;
     cell.imageView.clipsToBounds = YES;
@@ -251,6 +265,8 @@ static NSString * const reuseIdentifier = @"fsCell";
         cell.titleLabel.hidden = YES;
     }
 
+    BOOL itemShouldPresentLabels = self.sourceController.source.itemsShouldPresentLabels;
+
     if (item.isDirectory) {
         cell.imageView.image = [FSImage iconNamed:@"icon-folder"];
         cell.type = FSCollectionViewCellTypeDirectory;
@@ -259,18 +275,34 @@ static NSString * const reuseIdentifier = @"fsCell";
             cell.imageView.image = [FSImage iconNamed:@"icon-file"];
             cell.type = FSCollectionViewCellTypeFile;
         } else {
-            cell.imageView.layer.borderWidth = 0;
-            cell.imageView.contentMode = UIViewContentModeScaleAspectFill;
-            cell.type = FSCollectionViewCellTypeMedia;
-
             NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:item.thumbnailURL] cachePolicy:NSURLRequestReturnCacheDataElseLoad timeoutInterval:120];
 
             cell.imageTask = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-                if (data && (cell.taskHash == cell.imageTask.hash)) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        cell.imageView.image = [UIImage imageWithData:data];
-                    });
+
+                UIImage *image;
+
+                if (response.hasImageMIMEType && data && (cell.taskHash == cell.imageTask.hash)) {
+                    image = [UIImage imageWithData:data];
                 }
+
+                if (!image) {
+                    image = [FSImage iconNamed:@"icon-file"];
+                }
+
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (itemShouldPresentLabels) {
+                        cell.type = FSCollectionViewCellTypeFile;
+                        cell.titleLabel.text = item.fileName;
+                        cell.titleLabel.hidden = NO;
+                        cell.imageView.image = [image scaledToSize:CGSizeMake(32, 32)];
+                    } else {
+                        cell.type = FSCollectionViewCellTypeMedia;
+                        cell.imageView.layer.borderWidth = 0;
+                        cell.imageView.contentMode = UIViewContentModeScaleAspectFill;
+                        cell.imageView.clipsToBounds = YES;
+                        cell.imageView.image = image;
+                    }
+                });
 
                 cell.imageTask = nil;
             }];
