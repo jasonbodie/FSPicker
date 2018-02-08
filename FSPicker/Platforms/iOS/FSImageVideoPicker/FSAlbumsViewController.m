@@ -153,7 +153,7 @@
     NSString *predicateFormat = [predicateComponents componentsJoinedByString:@" || "];
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.predicate = [NSPredicate predicateWithFormat:predicateFormat argumentArray:arguments];
-
+    fetchOptions.sortDescriptors = @[[ [ NSSortDescriptor alloc ] initWithKey: @"creationDate" ascending: NO ]];
     return fetchOptions;
 }
 

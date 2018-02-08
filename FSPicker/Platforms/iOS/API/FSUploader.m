@@ -498,7 +498,10 @@
                      progress:(void (^)(NSProgress *uploadProgress))progress
             completionHandler:(void (^)(FSBlob *blob, NSError *error))completionHandler {
 
-    [[PHImageManager defaultManager] requestImageDataForAsset:asset options:nil resultHandler:^(NSData * imageData, NSString * dataUTI, UIImageOrientation orientation, NSDictionary * info) {
+    PHImageRequestOptions* options = [ [ PHImageRequestOptions alloc ] init ];
+    options.networkAccessAllowed = YES;
+
+    [[PHImageManager defaultManager] requestImageDataForAsset:asset options:options resultHandler:^(NSData * imageData, NSString * dataUTI, UIImageOrientation orientation, NSDictionary * info) {
         NSURL *imageURL = info[@"PHImageFileURLKey"];
         NSString *fileName = imageURL.lastPathComponent;
         storeOptions.fileName = fileName;
@@ -519,8 +522,11 @@
 
     PHVideoRequestOptions *options=[[PHVideoRequestOptions alloc] init];
     options.version = PHVideoRequestOptionsVersionOriginal;
+    options.networkAccessAllowed = YES;
 
-    [[PHImageManager defaultManager] requestAVAssetForVideo:asset options:options resultHandler:^(AVAsset *asset, AVAudioMix *audioMix, NSDictionary *info) {
+    [[PHImageManager defaultManager] requestAVAssetForVideo:asset
+                                                    options:options
+                                              resultHandler:^(AVAsset *asset, AVAudioMix *audioMix, NSDictionary *info) {
         if ([asset isKindOfClass:[AVURLAsset class]]) {
             NSURL *URL = ((AVURLAsset *)asset).URL;
             NSData *data = [NSData dataWithContentsOfURL:URL];
@@ -532,6 +538,11 @@
             } completionHandler:^(FSBlob *blob, NSError *error) {
                 completionHandler(blob, error);
             }];
+        }
+        else
+        {
+            NSError* theError = [ NSError errorWithDomain: nil code: nil userInfo: nil ];
+            completionHandler(nil, theError);
         }
     }];
 }
