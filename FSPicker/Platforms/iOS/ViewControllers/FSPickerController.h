@@ -22,4 +22,5 @@
 
 - (void)didCancel;
 
+- (void)fsLocalFilesPickedWithUrls:(NSArray<NSURL *> *)urls;
 @end

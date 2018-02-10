@@ -63,6 +63,15 @@
     });
 }
 
+- (void)fsLocalFilesPickedWithUrls:(NSArray<NSURL*>*)urls {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([self.fsDelegate respondsToSelector:@selector(fsPicker:didFinishPickingMediaWithLocalURLs:)]) {
+            [self.fsDelegate fsPicker:self didFinishPickingMediaWithLocalURLs:urls];
+        }
+    });
+}
+
+
 - (void)fsUploadError:(NSError *)error {
     dispatch_async(dispatch_get_main_queue(), ^{
         if ([self.fsDelegate respondsToSelector:@selector(fsPicker:pickingDidError:)]) {

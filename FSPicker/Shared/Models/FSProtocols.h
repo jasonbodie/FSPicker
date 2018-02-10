@@ -16,6 +16,7 @@
 - (void)fsPicker:(FSPickerController *)picker pickingDidError:(NSError *)error;
 - (void)fsPicker:(FSPickerController *)picker pickedMediaWithBlob:(FSBlob *)blob;
 - (void)fsPicker:(FSPickerController *)picker didFinishPickingMediaWithBlobs:(NSArray<FSBlob *> *)blobs;
+- (void)fsPicker:(FSPickerController *)picker didFinishPickingMediaWithLocalURLs:(NSArray<NSURL *> *)urls;
 @end
 
 @protocol FSSaveDelegate <NSObject>
