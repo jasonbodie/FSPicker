@@ -22,5 +22,5 @@
 
 - (void)didCancel;
 
-- (void)fsLocalFilesPickedWithUrls:(NSArray<NSURL *> *)urls;
+- (void)fsPHAssetsPicked:(NSArray<PHAsset*>*)aSelectedPHAssets;
 @end
