@@ -156,6 +156,7 @@
     fetchOptions.predicate = [NSPredicate predicateWithFormat:predicateFormat argumentArray:arguments];
     BOOL ascendingSort = !self.config.newestFirst;
     fetchOptions.sortDescriptors = @[[ [ NSSortDescriptor alloc ] initWithKey: @"creationDate" ascending: ascendingSort ]];
+
     return fetchOptions;
 }
 
