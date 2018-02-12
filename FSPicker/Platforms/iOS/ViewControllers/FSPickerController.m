@@ -6,6 +6,7 @@
 //  Copyright © 2016 Filestack. All rights reserved.
 //
 
+#import <Photos/Photos.h>
 #import "FSTheme.h"
 #import "FSPickerController.h"
 #import "FSSourceListViewController.h"
@@ -62,6 +63,15 @@
         }
     });
 }
+
+- (void)fsPHAssetsPicked:(NSArray<PHAsset*>*)aSelectedPHAssets {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ( [ self.fsDelegate respondsToSelector: @selector( fsPicker:didFinishPickingMediaWithPHAssets: ) ]) {
+            [ self.fsDelegate fsPicker: self didFinishPickingMediaWithPHAssets: aSelectedPHAssets ];
+        }
+    });
+}
+
 
 - (void)fsUploadError:(NSError *)error {
     dispatch_async(dispatch_get_main_queue(), ^{

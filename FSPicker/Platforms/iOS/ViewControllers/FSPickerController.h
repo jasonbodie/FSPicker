@@ -22,4 +22,5 @@
 
 - (void)didCancel;
 
+- (void)fsPHAssetsPicked:(NSArray<PHAsset*>*)aSelectedPHAssets;
 @end

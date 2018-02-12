@@ -112,7 +112,7 @@
     if (self.config.selectMultiple) {
         [self updateToolbar];
     } else {
-        [self uploadSelectedAssets];
+        [self handleSelectedAssetsPicked];
     }
 }
 
@@ -132,18 +132,30 @@
 
 #pragma mark - Upload
 
-- (void)uploadSelectedAssets {
-    FSProgressModalViewController *uploadModal = [[FSProgressModalViewController alloc] init];
-    uploadModal.modalPresentationStyle = UIModalPresentationOverCurrentContext;
+- (void)handleSelectedAssetsPicked {
+    if( self.config.shouldUpload )
+    {
+        FSProgressModalViewController *uploadModal = [[FSProgressModalViewController alloc] init];
+        uploadModal.modalPresentationStyle = UIModalPresentationOverCurrentContext;
 
-    FSUploader *uploader = [[FSUploader alloc] initWithConfig:self.config source:self.source];
-    uploader.uploadModalDelegate = uploadModal;
-    uploader.pickerDelegate = (FSPickerController *)self.navigationController;
+        FSUploader *uploader = [[FSUploader alloc] initWithConfig:self.config source:self.source];
+        uploader.uploadModalDelegate = uploadModal;
+        uploader.pickerDelegate = (FSPickerController *)self.navigationController;
 
-    [self presentViewController:uploadModal animated:YES completion:nil];
-    [uploader uploadLocalItems:self.selectedAssets];
-    [self clearSelectedAssets];
+        [self presentViewController:uploadModal animated:YES completion:nil];
+        [uploader uploadLocalItems:self.selectedAssets];
+        [self clearSelectedAssets];
+    }
+    else
+    {
+        FSPickerController *thePickerController = (FSPickerController *)self.navigationController;
+        if ([thePickerController respondsToSelector:@selector(fsPHAssetsPicked:)]) {
+            [thePickerController fsPHAssetsPicked:self.selectedAssets];
+        }
+    }
 }
+
+
 
 - (void)clearSelectedAssets {
     [self.selectedAssets removeAllObjects];
@@ -167,7 +179,7 @@
 }
 
 - (UIBarButtonItem *)uploadButtonItem {
-    return [[UIBarButtonItem alloc] initWithTitle:nil style:UIBarButtonItemStylePlain target:self action:@selector(uploadSelectedAssets)];
+    return [[UIBarButtonItem alloc] initWithTitle:nil style:UIBarButtonItemStylePlain target:self action:@selector(handleSelectedAssetsPicked)];
 }
 
 - (void)updateToolbar {

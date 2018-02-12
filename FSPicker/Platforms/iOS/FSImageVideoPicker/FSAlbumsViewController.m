@@ -95,7 +95,8 @@
     if (collectionTotalCount > 0) {
         cell.textLabel.text = collection.localizedTitle;
         cell.detailTextLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)collectionTotalCount];
-        PHAsset *asset = assetsFetchResult[0];
+        NSUInteger theThumbnailIndex = self.config.newestFirst ? collectionTotalCount - 1 : 0;
+        PHAsset *asset = assetsFetchResult[ theThumbnailIndex ];
         [FSImageFetcher imageForAsset:asset
               withCachingImageManager:self.cachingImageManager
                             thumbSize:self.thumbSize
@@ -153,6 +154,8 @@
     NSString *predicateFormat = [predicateComponents componentsJoinedByString:@" || "];
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.predicate = [NSPredicate predicateWithFormat:predicateFormat argumentArray:arguments];
+    BOOL ascendingSort = !self.config.newestFirst;
+    fetchOptions.sortDescriptors = @[[ [ NSSortDescriptor alloc ] initWithKey: @"creationDate" ascending: ascendingSort ]];
 
     return fetchOptions;
 }
