@@ -148,14 +148,9 @@
     }
     else
     {
-        for( PHAsset * theSelectedAsset in self.selectedAssets)
-        {
-            NSLog(@"theSelectedAsset width: %@ height: %@", @(theSelectedAsset.pixelWidth), @(theSelectedAsset.pixelHeight));
-        }
-
         FSPickerController *thePickerController = (FSPickerController *)self.navigationController;
-        if ([thePickerController respondsToSelector:@selector(fsLocalFilesPickedWithUrls:)]) {
-            [thePickerController fsLocalFilesPickedWithUrls:[NSArray array ]];
+        if ([thePickerController respondsToSelector:@selector(fsPHAssetsPicked:)]) {
+            [thePickerController fsPHAssetsPicked:self.selectedAssets];
         }
     }
 }
