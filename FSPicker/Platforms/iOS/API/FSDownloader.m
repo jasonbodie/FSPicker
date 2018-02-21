@@ -19,7 +19,7 @@
             return;
         }
 
-        NSString *uuidFileName = [NSString stringWithFormat:@"%@_%@", [[NSUUID UUID] UUIDString], blob.fileName];
+        NSString *uuidFileName = [NSString stringWithFormat:@"%@_.%@", [[NSUUID UUID] UUIDString], blob.fileName.pathExtension];
         NSURL *tmpDirURL = [NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES];
         NSURL *fileURL = [tmpDirURL URLByAppendingPathComponent:uuidFileName];
         [data writeToFile:[fileURL path] atomically:YES];
